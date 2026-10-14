@@ -1,0 +1,10 @@
+* {
+    margin: 0;
+    padding: 0%;
+    box-sizing: border-box;
+    /* Buat hapus style default dari browser */
+}
+
+body {
+    font-family: "Jakarta Sans", sans-serif;
+}

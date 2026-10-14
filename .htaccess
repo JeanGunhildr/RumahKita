@@ -1,0 +1,7 @@
+
+
+
+RewriteEngine On
+RewriteRule ^$ src/home/ [L]
+
+# Biar root web nya ke src/home
