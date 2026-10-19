@@ -5,10 +5,6 @@
 <footer
     class="relative bg-gradient-to-b from-white via-sky-50/70 to-sky-100/50 border-t border-sky-100 pt-16 pb-12 overflow-hidden">
 
-    <!-- Decorative Glow -->
-    <div class="absolute bottom-0 right-0 w-96 h-96 bg-sky-200/30 rounded-full blur-3xl pointer-events-none"></div>
-    <div class="absolute top-10 left-10 w-72 h-72 bg-sky-300/20 rounded-full blur-3xl pointer-events-none"></div>
-
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Main Footer Links Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 pb-12 border-b border-sky-200/70">
@@ -16,13 +12,6 @@
             <!-- Brand Column -->
             <div class="lg:col-span-3 space-y-4">
                 <a href="<?= BASE_URL ?>/src/home/index.php" class="flex items-center gap-3 group">
-                    <div
-                        class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-600 to-sky-400 flex items-center justify-center shadow-md shadow-sky-500/20">
-                        <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"
-                                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                        </svg>
-                    </div>
                     <span class="text-2xl font-black tracking-tight text-slate-900">
                         Rumah<span class="text-sky-500">Kita</span>
                     </span>
@@ -83,15 +72,6 @@
                             class="text-slate-600 hover:text-sky-600 transition-colors">Paket Promosi</a></li>
                     <li><a href="<?= BASE_URL ?>/src/home/index.php#cara-beli"
                             class="text-slate-600 hover:text-sky-600 transition-colors">Cara Beli</a></li>
-                    <li><a href="<?= BASE_URL ?>/src/properti/index.php#jual"
-                            class="text-slate-600 hover:text-sky-600 transition-colors">Jual Rumah</a></li>
-                    <li><a href="<?= BASE_URL ?>/src/auth/login.php"
-                            class="text-slate-600 hover:text-sky-600 transition-colors">Masuk / Akun</a></li>
-                    <li><a href="<?= BASE_URL ?>/src/admin/index.php"
-                            class="text-slate-600 hover:text-sky-600 transition-colors font-medium flex items-center gap-1.5">
-                            <span>Panel Admin</span>
-                            <span class="text-[9px] bg-sky-100 text-sky-700 font-bold px-1.5 py-0.5 rounded">Kelola</span>
-                        </a></li>
                 </ul>
             </div>
 
@@ -124,11 +104,6 @@
                                 d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
                         <span>rumahkitaofficial@gmail.com</span>
-                    </li>
-                    <li
-                        class="flex items-center gap-2.5 text-xs bg-sky-200/70 text-sky-800 font-semibold px-3 py-1.5 rounded-lg w-fit mt-1">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span>Layanan Online 24/7 Siap Sedia</span>
                     </li>
                 </ul>
 

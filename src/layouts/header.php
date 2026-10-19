@@ -1,14 +1,21 @@
 <?php
-if (!defined('BASE_URL')) {
-    $scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
-    define('BASE_URL', stripos($scriptName, '/RumahKita') !== false ? '/RumahKita' : '');
-}
+// src/layouts/header.php - Komponen header & navbar utama RumahKita
+
+require_once __DIR__ . '/../../utils/sesi.php';
 
 $current_page = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
 $is_home = (stripos($current_page, '/src/home/index.php') !== false) || (substr($current_page, -9) === 'index.php' && stripos($current_page, '/src/') === false);
 $is_properti = stripos($current_page, '/src/properti/') !== false;
 $is_auth = stripos($current_page, '/src/auth/') !== false;
 $is_admin = stripos($current_page, '/src/admin/') !== false;
+
+$user_aktif = penggunaAktif();
+
+// Batasi akses: Admin HANYA bisa berada di dashboard admin, tidak boleh mengakses halaman utama publik
+if (apakahAdmin() && stripos($current_page, '/src/admin/') === false) {
+    header('Location: ' . BASE_URL . '/src/admin/index.php');
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="id" class="scroll-smooth">
@@ -70,73 +77,65 @@ $is_admin = stripos($current_page, '/src/admin/') !== false;
             <div class="flex items-center justify-between h-20">
 
                 <!-- Logo Brand -->
-                <a href="<?= BASE_URL ?>/src/home/index.php" class="flex items-center gap-3 group shrink-0">
-                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-sky-600 to-sky-400
-                    flex items-center justify-center shadow-md shadow-sky-500/25
-                    group-hover:scale-105 transition-transform duration-300">
-                        <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"
-                                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                        </svg>
-                    </div>
-
+                <a href="<?= BASE_URL ?>/index.php" class="flex items-center gap-3 group shrink-0">
                     <div>
-                        <span class="text-2xl font-extrabold tracking-tight text-slate-900 group-hover:text-sky-600 transition-colors">
+                        <span class="text-2xl font-extrabold tracking-tight text-slate-900">
                             Rumah<span class="text-sky-500">Kita</span>
-                        </span>
-                        <span class="block text-[10px] font-semibold uppercase tracking-wider text-sky-600 -mt-1">
-                            Properti Idaman
                         </span>
                     </div>
                 </a>
 
                 <!-- Navigasi Desktop -->
                 <nav class="hidden md:flex items-center gap-1 lg:gap-2">
-                    <a href="<?= BASE_URL ?>/src/home/index.php"
+                    <a href="<?= BASE_URL ?>/index.php"
                         class="px-3.5 py-2 text-sm font-bold rounded-xl transition-all <?= $is_home ? 'text-sky-600 bg-sky-50' : 'text-slate-700 hover:text-sky-600 hover:bg-sky-50' ?>">
                         Beranda
                     </a>
 
-                    <a href="<?= BASE_URL ?>/src/properti/index.php" 
-                        class="px-3.5 py-2 text-sm font-semibold rounded-xl transition-all <?= $is_properti ? 'text-sky-600 bg-sky-50' : 'text-slate-700 hover:text-sky-600 hover:bg-sky-50' ?>">
-                        Cari Rumah
+                    <a href="<?= BASE_URL ?>/index.php#rekomendasi"
+                        class="px-3.5 py-2 text-sm font-semibold rounded-xl transition-all text-slate-700 hover:text-sky-600 hover:bg-sky-50">
+                        Katalog Properti
                     </a>
 
-                    <a href="<?= BASE_URL ?>/src/home/index.php#paket" 
+                    <a href="<?= BASE_URL ?>/index.php#paket"
                         class="px-3.5 py-2 text-sm font-semibold text-slate-700 hover:text-sky-600 hover:bg-sky-50 rounded-xl transition-all">
                         Paket
                     </a>
 
-                    <a href="<?= BASE_URL ?>/src/home/index.php#cara-beli" 
-                        class="px-3.5 py-2 text-sm font-semibold text-slate-700 hover:text-sky-600 hover:bg-sky-50 rounded-xl transition-all">
-                        Cara Beli
-                    </a>
-
-                    <a href="<?= BASE_URL ?>/src/admin/index.php" 
-                        class="px-3.5 py-2 text-sm font-semibold text-slate-700 hover:text-sky-600 hover:bg-sky-50 rounded-xl transition-all flex items-center gap-1.5">
-                        <span>Admin</span>
-                        <span class="text-[9px] bg-sky-100 text-sky-700 font-bold px-1.5 py-0.5 rounded">Kelola</span>
-                    </a>
                 </nav>
 
-                <!-- Aksi Desktop -->
+                <!-- Aksi Pengguna Desktop -->
                 <div class="hidden md:flex items-center gap-3">
+                    <?php if ($user_aktif): ?>
+                    <!-- Tampilan Profil Singkat Pengguna yang Login -->
+                    <div class="flex items-center gap-2.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-2xl">
+                        <div
+                            class="w-8 h-8 rounded-xl <?= $user_aktif['role'] === 'admin' ? 'bg-amber-100 text-amber-700' : 'bg-sky-100 text-sky-700' ?> flex items-center justify-center font-bold text-xs">
+                            <?= e(strtoupper(substr($user_aktif['name'], 0, 1))) ?>
+                        </div>
+                        <div class="text-left text-xs leading-tight">
+                            <span
+                                class="font-bold text-slate-900 block max-w-[120px] truncate"><?= e($user_aktif['name']) ?></span>
+                            <span
+                                class="text-[10px] uppercase font-semibold text-slate-400 block"><?= e($user_aktif['role']) ?></span>
+                        </div>
+                    </div>
 
-                    <a href="<?= BASE_URL ?>/src/properti/index.php#jual" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold
-                    text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200/80
-                    rounded-xl transition-all">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Jual Rumah
+                    <!-- Tombol Keluar -->
+                    <a href="<?= BASE_URL ?>/src/auth/logout.php"
+                        class="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 border border-rose-200 rounded-xl transition-all duration-200"
+                        title="Keluar dari akun">
+                        Keluar
                     </a>
-
+                    <?php else: ?>
+                    <!-- Tombol Masuk / Daftar untuk Pengunjung -->
                     <a href="<?= BASE_URL ?>/src/auth/login.php" class="inline-flex items-center justify-center px-5 py-2.5 text-sm
-                    font-semibold text-white bg-gradient-to-r from-sky-500 to-sky-600
-                    hover:from-sky-600 hover:to-sky-700 rounded-xl shadow-md
-                    shadow-sky-500/25 transition-all">
+                        font-semibold text-white bg-gradient-to-r from-sky-500 to-sky-600
+                        hover:from-sky-600 hover:to-sky-700 rounded-xl shadow-md
+                        shadow-sky-500/25 transition-all">
                         Masuk / Daftar
                     </a>
+                    <?php endif; ?>
                 </div>
 
                 <!-- Tombol Hamburger Mobile -->
@@ -162,40 +161,47 @@ $is_admin = stripos($current_page, '/src/admin/') !== false;
         <!-- Menu Mobile -->
         <div id="mobile-menu" class="hidden md:hidden border-t border-sky-100 bg-white px-4 py-4 space-y-2">
 
-            <a href="<?= BASE_URL ?>/src/home/index.php"
+            <?php if ($user_aktif): ?>
+            <div class="p-3 mb-2 bg-slate-50 border border-slate-100 rounded-xl flex items-center gap-3">
+                <div
+                    class="w-9 h-9 rounded-xl <?= $user_aktif['role'] === 'admin' ? 'bg-amber-100 text-amber-700' : 'bg-sky-100 text-sky-700' ?> flex items-center justify-center font-bold text-sm">
+                    <?= e(strtoupper(substr($user_aktif['name'], 0, 1))) ?>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-slate-800"><?= e($user_aktif['name']) ?></p>
+                    <p class="text-[10px] text-slate-400 capitalize">Peran: <?= e($user_aktif['role']) ?></p>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <a href="<?= BASE_URL ?>/index.php"
                 class="block px-4 py-3 rounded-xl <?= $is_home ? 'bg-sky-50 text-sky-700 font-bold' : 'text-slate-700 hover:bg-sky-50 font-semibold' ?> text-sm">
                 Beranda
             </a>
 
-            <a href="<?= BASE_URL ?>/src/properti/index.php" 
-                class="block px-4 py-3 rounded-xl <?= $is_properti ? 'bg-sky-50 text-sky-700 font-bold' : 'text-slate-700 hover:bg-sky-50 font-semibold' ?> text-sm">
-                Cari Rumah
+            <a href="<?= BASE_URL ?>/index.php#rekomendasi"
+                class="block px-4 py-3 rounded-xl text-slate-700 hover:bg-sky-50 font-semibold text-sm">
+                Katalog Properti
             </a>
 
-            <a href="<?= BASE_URL ?>/src/home/index.php#paket" 
+            <a href="<?= BASE_URL ?>/index.php#paket"
                 class="block px-4 py-3 rounded-xl text-slate-700 hover:bg-sky-50 hover:text-sky-600 font-semibold text-sm">
                 Paket
             </a>
 
-            <a href="<?= BASE_URL ?>/src/home/index.php#cara-beli" 
-                class="block px-4 py-3 rounded-xl text-slate-700 hover:bg-sky-50 hover:text-sky-600 font-semibold text-sm">
-                Cara Beli
-            </a>
 
-            <a href="<?= BASE_URL ?>/src/admin/index.php" 
-                class="block px-4 py-3 rounded-xl text-slate-700 hover:bg-sky-50 hover:text-sky-600 font-semibold text-sm">
-                Panel Admin
-            </a>
 
-            <a href="<?= BASE_URL ?>/src/properti/index.php#jual" 
-                class="block px-4 py-3 rounded-xl text-sky-700 bg-sky-50 hover:bg-sky-100 font-semibold text-sm">
-                + Jual Rumah
+            <?php if ($user_aktif): ?>
+            <a href="<?= BASE_URL ?>/src/auth/logout.php"
+                class="block text-center px-4 py-3 mt-3 rounded-xl text-rose-700 bg-rose-50 hover:bg-rose-100 font-bold text-sm border border-rose-200">
+                Keluar Akun
             </a>
-
+            <?php else: ?>
             <a href="<?= BASE_URL ?>/src/auth/login.php" class="block text-center px-4 py-3 mt-3 rounded-xl text-white
             bg-gradient-to-r from-sky-500 to-sky-600 font-bold text-sm">
                 Masuk / Daftar
             </a>
+            <?php endif; ?>
         </div>
     </header>
 

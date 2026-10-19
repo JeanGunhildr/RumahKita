@@ -1,85 +1,57 @@
 <?php
-// Halaman Admin RumahKita
-// Terintegrasi dengan data/properti_data.php
+// src/admin/index.php - Dashboard Panel Admin RumahKita
 
-require_once __DIR__ . '/../data/properti_data.php';
+require_once __DIR__ . '/../../utils/koneksi.php';
+require_once __DIR__ . '/../../utils/sesi.php';
 
-if (!defined('BASE_URL')) {
-    $scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+wajibPeran('admin');
 
-    define(
-        'BASE_URL',
-        stripos($scriptName, '/RumahKita') !== false ? '/RumahKita' : ''
-    );
-}
+$admin_user = penggunaAktif();
+$admin_name = $admin_user['name'];
+$admin_role = ucfirst($admin_user['role']);
+$admin_initial = strtoupper(substr($admin_name, 0, 1));
 
-// Ambil data properti terpusat dari properti_data.php
-$all_raw = get_all_properti();
+$flash_sukses = $_SESSION['flash_sukses'] ?? null;
+unset($_SESSION['flash_sukses']);
 
-// Status pemetaan sesuai database: 'draft', 'pending', 'aktif', 'terjual', 'ditolak'
-$status_map = [
-    1 => 'aktif',
-    2 => 'aktif',
-    3 => 'pending',
-    4 => 'aktif',
-    5 => 'draft',
-    6 => 'terjual'
-];
+// Query seluruh properti dengan JOIN ke tabel users dan subquery gambar utama serta daftar fasilitas
+$sql = "SELECT p.*, u.name AS nama_penginput,
+               (SELECT image_path FROM property_images WHERE property_id = p.id AND is_primary = 1 LIMIT 1) AS primary_image,
+               (SELECT GROUP_CONCAT(facility_name SEPARATOR '||') FROM property_facilities WHERE property_id = p.id) AS fasilitas_list
+        FROM properties p
+        LEFT JOIN users u ON p.user_id = u.id
+        ORDER BY p.created_at DESC";
 
-// Contoh properti berstatus 'ditolak' agar kelima status dapat teruji dengan baik di frontend
+$result = $conn->query($sql);
 $properti_list = [];
-foreach ($all_raw as $id => $item) {
-    $st = $status_map[$id] ?? 'aktif';
-    $item['status'] = $st;
-    $properti_list[$id] = $item;
+if ($result) {
+    while ($row = $result->fetch_assoc()) {
+        $properti_list[] = $row;
+    }
 }
 
-if (!isset($properti_list[7])) {
-    $properti_list[7] = [
-        'id' => 7,
-        'kode' => 'RK-007',
-        'nama' => 'Cluster Taman Asri Bukit Duri',
-        'kategori' => 'rumah',
-        'tipe_label' => 'Rumah Cluster',
-        'lokasi_singkat' => 'Tebet, Jakarta Selatan',
-        'alamat_lengkap' => 'Jl. Bukit Duri Selatan No. 12, Tebet, Jakarta Selatan',
-        'harga' => 850000000,
-        'harga_format' => 'Rp 850.000.000',
-        'foto_utama' => 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=1200&q=80',
-        'status' => 'ditolak'
-    ];
-}
-
-// Hitung ringkasan statistik untuk kartu atas
+// Hitung ringkasan statistik
 $total_properti = count($properti_list);
 $properti_aktif = 0;
 $properti_pending = 0;
 
 foreach ($properti_list as $p) {
-    if ($p['status'] === 'aktif') {
+    if ($p['status'] === 'active') {
         $properti_aktif++;
     } elseif ($p['status'] === 'pending') {
         $properti_pending++;
     }
 }
-
-// Info admin untuk tampilan UI frontend
-$admin_name = 'Administrator';
-$admin_role = 'Admin RumahKita';
-$admin_initial = 'A';
 ?>
-
 <!DOCTYPE html>
 <html lang="id">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Kelola Properti | RumahKita</title>
+    <title>Kelola Properti | Panel Admin RumahKita</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
@@ -122,12 +94,7 @@ $admin_initial = 'A';
                transition-transform duration-300 lg:translate-x-0">
 
             <!-- Logo -->
-            <a href="<?= BASE_URL ?>/index.php" class="flex items-center gap-3 mb-10">
-                <div class="w-10 h-10 rounded-xl bg-sky-600 text-white
-                       flex items-center justify-center font-extrabold text-xl">
-                    R
-                </div>
-
+            <a href="<?= BASE_URL ?>/src/admin/index.php" class="flex items-center gap-3 mb-10">
                 <span class="text-xl font-extrabold tracking-tight">
                     Rumah<span class="text-sky-600">Kita</span>
                 </span>
@@ -135,12 +102,11 @@ $admin_initial = 'A';
 
             <!-- Menu -->
             <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
-                Menu Utama
+                Menu Dashboard
             </p>
 
             <nav class="space-y-2">
-
-                <a href="#" class="sidebar-link sidebar-active">
+                <a href="<?= BASE_URL ?>/src/admin/index.php" class="sidebar-link sidebar-active">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M3 10.5L12 3l9 7.5V21H3V10.5z" />
@@ -149,32 +115,29 @@ $admin_initial = 'A';
                     Kelola Properti
                 </a>
 
-                <a href="<?= BASE_URL ?>/index.php" class="sidebar-link text-slate-600">
+                <a href="<?= BASE_URL ?>/src/admin/tambah.php" class="sidebar-link text-slate-600">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M14 3h7v7m-11 4L21 3M19 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
-                    Lihat Website
+                    Tambah Properti
                 </a>
-
             </nav>
 
             <!-- Admin info -->
             <div class="mt-auto pt-6 border-t border-slate-100">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-sky-100 text-sky-700
-                           flex items-center justify-center font-bold">
-                        <?= $admin_initial ?>
+                    <div
+                        class="w-10 h-10 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+                        <?= e($admin_initial) ?>
                     </div>
-
                     <div class="min-w-0">
-                        <p class="font-bold text-sm truncate"><?= $admin_name ?></p>
-                        <p class="text-xs text-slate-400 truncate"><?= $admin_role ?></p>
+                        <p class="font-bold text-sm truncate"><?= e($admin_name) ?></p>
+                        <p class="text-xs text-slate-400 truncate">Peran: <?= e($admin_role) ?></p>
                     </div>
                 </div>
 
-                <a href="<?= BASE_URL ?>/src/auth/login.php" class="mt-4 block text-sm font-semibold text-rose-600
-                       hover:text-rose-700">
+                <a href="<?= BASE_URL ?>/src/auth/logout.php"
+                    class="mt-4 block text-sm font-semibold text-rose-600 hover:text-rose-700">
                     Keluar akun
                 </a>
             </div>
@@ -188,11 +151,9 @@ $admin_initial = 'A';
         <main class="flex-1 min-w-0 lg:ml-64">
 
             <!-- HEADER -->
-            <header class="sticky top-0 z-20 bg-white border-b border-slate-200
-                   px-5 sm:px-8 py-5 flex items-center justify-between gap-4">
-
+            <header
+                class="sticky top-0 z-20 bg-white border-b border-slate-200 px-5 sm:px-8 py-5 flex items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
-
                     <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-lg hover:bg-slate-100"
                         aria-label="Buka menu">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,83 +163,76 @@ $admin_initial = 'A';
                     </button>
 
                     <div>
-                        <h1 class="text-xl sm:text-2xl font-extrabold">
+                        <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900">
                             Kelola Properti
                         </h1>
-
-                        <p class="text-sm text-slate-500 mt-1 hidden sm:block">
-                            Kelola data properti RumahKita.
+                        <p class="text-sm text-slate-500 mt-0.5 hidden sm:block">
+                            Dashboard pengelolaan data katalog properti RumahKita.
                         </p>
                     </div>
-
                 </div>
 
-                <button type="button" onclick="alert('Fitur tambah properti baru sedang dalam tahap pengembangan.')" class="shrink-0 inline-flex items-center gap-2
-                       bg-sky-600 hover:bg-sky-700 text-white
-                       px-4 py-3 rounded-xl text-sm font-bold transition">
+                <!-- Tombol Tambah Properti Baru -->
+                <a href="<?= BASE_URL ?>/src/admin/tambah.php"
+                    class="shrink-0 inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-sky-500/20 transition">
                     <span class="text-lg leading-none">+</span>
                     <span class="hidden sm:inline">Tambah Properti</span>
                     <span class="sm:hidden">Tambah</span>
-                </button>
-
+                </a>
             </header>
 
             <!-- ISI HALAMAN -->
             <div class="p-5 sm:p-8 space-y-7">
+
+                <!-- Pesan Flash Sukses -->
+                <?php if ($flash_sukses): ?>
+                <div
+                    class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium flex items-center gap-3 shadow-sm">
+                    <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span><?= e($flash_sukses) ?></span>
+                </div>
+                <?php endif; ?>
 
                 <!-- STATISTIK -->
                 <section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
                     <div class="bg-white border border-slate-200 rounded-2xl p-5">
                         <div class="flex items-center justify-between">
-                            <p class="text-sm font-medium text-slate-500">
-                                Total Properti
-                            </p>
-
-                            <div class="w-10 h-10 rounded-xl bg-sky-50
-                                    text-sky-600 flex items-center justify-center">
+                            <p class="text-sm font-medium text-slate-500">Total Properti</p>
+                            <div class="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M3 10.5L12 3l9 7.5V21H3V10.5z" />
                                 </svg>
                             </div>
                         </div>
-
                         <p class="text-3xl font-extrabold mt-4"><?= $total_properti ?></p>
-                        <p class="text-xs text-slate-400 mt-1">
-                            Seluruh data properti
-                        </p>
+                        <p class="text-xs text-slate-400 mt-1">Seluruh data tercatat di database</p>
                     </div>
 
                     <div class="bg-white border border-slate-200 rounded-2xl p-5">
                         <div class="flex items-center justify-between">
-                            <p class="text-sm font-medium text-slate-500">
-                                Properti Aktif
-                            </p>
-
-                            <div class="w-10 h-10 rounded-xl bg-emerald-50
-                                    text-emerald-600 flex items-center justify-center">
+                            <p class="text-sm font-medium text-slate-500">Properti Aktif</p>
+                            <div
+                                class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M5 12l4 4L19 6" />
                                 </svg>
                             </div>
                         </div>
-
                         <p class="text-3xl font-extrabold mt-4"><?= $properti_aktif ?></p>
-                        <p class="text-xs text-slate-400 mt-1">
-                            Properti berstatus aktif
-                        </p>
+                        <p class="text-xs text-slate-400 mt-1">Status 'active' tayang di beranda</p>
                     </div>
 
                     <div class="bg-white border border-slate-200 rounded-2xl p-5">
                         <div class="flex items-center justify-between">
-                            <p class="text-sm font-medium text-slate-500">
-                                Pending Review
-                            </p>
-
-                            <div class="w-10 h-10 rounded-xl bg-amber-50
-                                    text-amber-600 flex items-center justify-center">
+                            <p class="text-sm font-medium text-slate-500">Pending Review</p>
+                            <div
+                                class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <circle cx="12" cy="12" r="9" stroke-width="2" />
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -286,11 +240,8 @@ $admin_initial = 'A';
                                 </svg>
                             </div>
                         </div>
-
                         <p class="text-3xl font-extrabold mt-4"><?= $properti_pending ?></p>
-                        <p class="text-xs text-slate-400 mt-1">
-                            Menunggu verifikasi admin
-                        </p>
+                        <p class="text-xs text-slate-400 mt-1">Menunggu konfirmasi admin</p>
                     </div>
 
                 </section>
@@ -298,208 +249,138 @@ $admin_initial = 'A';
                 <!-- TABEL PROPERTI -->
                 <section class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
 
-                    <!-- Judul dan pencarian -->
-                    <div class="p-5 sm:p-6 border-b border-slate-100
-                           flex flex-col gap-4">
+                    <div class="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between">
                         <div>
-                            <h2 class="text-lg font-extrabold">
-                                Daftar Properti
-                            </h2>
-
-                            <p class="text-sm text-slate-500 mt-1">
-                                Lihat dan kelola properti yang terdaftar.
-                            </p>
+                            <h2 class="text-lg font-extrabold text-slate-900">Daftar Properti Database</h2>
+                            <p class="text-xs text-slate-500 mt-0.5">Seluruh properti yang diinput oleh admin (diurutkan
+                                dari yang terbaru).</p>
                         </div>
-
-                        <div class="flex flex-col sm:flex-row gap-3">
-
-                            <div class="relative flex-1">
-                                <svg class="absolute left-3 top-1/2 -translate-y-1/2
-                                       w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <circle cx="11" cy="11" r="7" stroke-width="2" />
-                                    <path stroke-linecap="round" stroke-width="2" d="m16 16 4 4" />
-                                </svg>
-
-                                <input id="searchInput" type="search" placeholder="Cari nama, kode, atau lokasi properti..."
-                                    class="w-full border border-slate-200 rounded-xl
-                                       pl-10 pr-4 py-3 text-sm outline-none
-                                       focus:border-sky-500 focus:ring-2
-                                       focus:ring-sky-100">
-                            </div>
-
-                            <select id="statusFilter" class="sm:w-48 border border-slate-200 rounded-xl
-                                   px-4 py-3 text-sm bg-white outline-none
-                                   focus:border-sky-500">
-                                <option value="">Semua Status</option>
-                                <option value="draft">Draft</option>
-                                <option value="pending">Pending</option>
-                                <option value="aktif">Aktif</option>
-                                <option value="terjual">Terjual</option>
-                                <option value="ditolak">Ditolak</option>
-                            </select>
-
-                        </div>
+                        <a href="<?= BASE_URL ?>/src/admin/tambah.php"
+                            class="text-xs font-bold text-sky-600 hover:text-sky-700">
+                            + Tambah Data
+                        </a>
                     </div>
 
                     <!-- Tabel -->
                     <div class="overflow-x-auto">
-
                         <table class="w-full text-sm text-left">
-
                             <thead class="bg-slate-50 text-slate-500">
                                 <tr class="text-xs uppercase tracking-wider">
-                                    <th class="px-5 py-4 font-bold">
-                                        Properti
-                                    </th>
-
-                                    <th class="px-5 py-4 font-bold">
-                                        Lokasi
-                                    </th>
-
-                                    <th class="px-5 py-4 font-bold">
-                                        Harga
-                                    </th>
-
-                                    <th class="px-5 py-4 font-bold">
-                                        Status
-                                    </th>
-
-                                    <th class="px-5 py-4 font-bold text-right">
-                                        Aksi
-                                    </th>
+                                    <th class="px-5 py-4 font-bold">Properti</th>
+                                    <th class="px-5 py-4 font-bold">Penginput (JOIN)</th>
+                                    <th class="px-5 py-4 font-bold">Lokasi</th>
+                                    <th class="px-5 py-4 font-bold">Harga</th>
+                                    <th class="px-5 py-4 font-bold">Status</th>
+                                    <th class="px-5 py-4 font-bold text-right">Aksi</th>
                                 </tr>
                             </thead>
 
-                            <tbody id="propertyTable" class="divide-y divide-slate-100">
-                                <?php foreach ($properti_list as $p): ?>
-                                    <?php
-                                    $st = strtolower(trim($p['status']));
-                                    
-                                    switch ($st) {
-                                        case 'aktif':
-                                            $status_classes = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
-                                            $status_label = 'Aktif';
-                                            break;
-                                        case 'pending':
-                                            $status_classes = 'bg-amber-50 text-amber-700 border border-amber-200';
-                                            $status_label = 'Pending';
-                                            break;
-                                        case 'terjual':
-                                            $status_classes = 'bg-purple-50 text-purple-700 border border-purple-200';
-                                            $status_label = 'Terjual';
-                                            break;
-                                        case 'ditolak':
-                                            $status_classes = 'bg-rose-50 text-rose-700 border border-rose-200';
-                                            $status_label = 'Ditolak';
-                                            break;
-                                        case 'draft':
-                                        default:
-                                            $status_classes = 'bg-slate-100 text-slate-600 border border-slate-200';
-                                            $status_label = 'Draft';
-                                            break;
-                                    }
-                                    ?>
-                                    <tr class="property-row hover:bg-slate-50/70 transition"
-                                        data-nama="<?= htmlspecialchars(strtolower($p['nama'] . ' ' . $p['kode'])) ?>"
-                                        data-lokasi="<?= htmlspecialchars(strtolower($p['lokasi_singkat'] . ' ' . $p['alamat_lengkap'])) ?>"
-                                        data-status="<?= htmlspecialchars($st) ?>">
-                                        <td class="px-5 py-4">
-                                            <div class="flex items-center gap-3">
-                                                <img src="<?= htmlspecialchars($p['foto_utama']) ?>" 
-                                                     alt="<?= htmlspecialchars($p['nama']) ?>" 
-                                                     class="w-14 h-12 rounded-xl object-cover border border-slate-200 shrink-0">
-                                                <div class="min-w-0">
-                                                    <p class="font-bold text-slate-900 truncate max-w-xs">
-                                                        <?= htmlspecialchars($p['nama']) ?>
-                                                    </p>
-                                                    <div class="flex items-center gap-2 mt-0.5 text-xs text-slate-400">
-                                                        <span class="font-mono font-medium"><?= htmlspecialchars($p['kode']) ?></span>
-                                                        <span>•</span>
-                                                        <span><?= htmlspecialchars($p['tipe_label'] ?? ucfirst($p['kategori'])) ?></span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </td>
-
-                                        <td class="px-5 py-4 text-slate-600">
-                                            <p class="font-semibold text-slate-800 text-xs sm:text-sm"><?= htmlspecialchars($p['lokasi_singkat']) ?></p>
-                                            <p class="text-xs text-slate-400 truncate max-w-[200px] mt-0.5" title="<?= htmlspecialchars($p['alamat_lengkap']) ?>">
-                                                <?= htmlspecialchars($p['alamat_lengkap']) ?>
-                                            </p>
-                                        </td>
-
-                                        <td class="px-5 py-4">
-                                            <span class="font-bold text-slate-900 text-sm">
-                                                <?= htmlspecialchars($p['harga_format']) ?>
-                                            </span>
-                                        </td>
-
-                                        <td class="px-5 py-4">
-                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold <?= $status_classes ?>">
-                                                <?= $status_label ?>
-                                            </span>
-                                        </td>
-
-                                        <td class="px-5 py-4 text-right">
-                                            <div class="inline-flex items-center gap-1">
-                                                <a href="<?= BASE_URL ?>/src/properti/detail.php?id=<?= $p['id'] ?>"
-                                                   target="_blank"
-                                                   class="p-2 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition"
-                                                   title="Lihat Halaman Publik">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                    </svg>
-                                                </a>
-                                                <button type="button"
-                                                        onclick="editProperti(<?= $p['id'] ?>, '<?= htmlspecialchars(addslashes($p['nama'])) ?>')"
-                                                        class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition"
-                                                        title="Edit Properti">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                    </svg>
-                                                </button>
-                                                <button type="button"
-                                                        onclick="hapusProperti(this, '<?= htmlspecialchars(addslashes($p['nama'])) ?>')"
-                                                        class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
-                                                        title="Hapus Properti">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-
-                                <!-- Row Kosong saat Pencarian / Filter Tidak Ditemukan -->
-                                <tr id="noDataRow" class="hidden">
-                                    <td colspan="5" class="px-5 py-14 text-center">
-                                        <div class="mx-auto mb-3 w-12 h-12 rounded-2xl
-                                               bg-slate-100 text-slate-400
-                                               flex items-center justify-center">
+                            <tbody class="divide-y divide-slate-100">
+                                <?php if (empty($properti_list)): ?>
+                                <tr>
+                                    <td colspan="6" class="px-5 py-16 text-center">
+                                        <div
+                                            class="mx-auto mb-3 w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center">
                                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                                    d="M3 10.5L12 3l9 7.5V21H3V10.5z" />
                                             </svg>
                                         </div>
-                                        <p class="font-bold text-slate-700">
-                                            Tidak ada properti yang cocok
-                                        </p>
-                                        <p class="text-sm text-slate-400 mt-1">
-                                            Coba gunakan kata kunci pencarian lain atau ubah filter status.
-                                        </p>
+                                        <p class="font-bold text-slate-700">Belum Ada Data Properti</p>
+                                        <p class="text-xs text-slate-400 mt-1">Silakan klik tombol "+ Tambah Properti"
+                                            untuk menginput data pertama.</p>
                                     </td>
                                 </tr>
+                                <?php else: ?>
+                                <?php foreach ($properti_list as $p): ?>
+                                <tr class="hover:bg-slate-50/70 transition">
+                                    <td class="px-5 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <?php 
+                                                $imgThumb = urlGambar($p['primary_image']);
+                                                ?>
+                                            <img src="<?= e($imgThumb) ?>" alt="<?= e($p['title']) ?>"
+                                                class="w-12 h-10 rounded-xl object-cover border border-slate-200 shrink-0">
+                                            <div class="min-w-0">
+                                                <p class="font-bold text-slate-900 truncate max-w-xs">
+                                                    <?= e($p['title']) ?></p>
+                                                <div class="flex items-center gap-2 mt-0.5 text-xs text-slate-400">
+                                                    <span class="font-mono font-medium"><?= e($p['id']) ?></span>
+                                                    <span>&bull;</span>
+                                                    <span class="capitalize"><?= e($p['property_type']) ?></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <!-- Menampilkan nama penginput dari hasil JOIN ke tabel users -->
+                                    <td class="px-5 py-4">
+                                        <span
+                                            class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium">
+                                            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                            <?= e($p['nama_penginput'] ?: 'Admin') ?>
+                                        </span>
+                                    </td>
+
+                                    <td class="px-5 py-4 text-slate-600">
+                                        <p class="font-semibold text-slate-800 text-xs sm:text-sm"><?= e($p['city']) ?>
+                                        </p>
+                                        <p class="text-xs text-slate-400 truncate max-w-[180px]"><?= e($p['address']) ?>
+                                        </p>
+                                    </td>
+
+                                    <td class="px-5 py-4">
+                                        <span class="font-bold text-slate-900 text-sm">
+                                            Rp <?= number_format((float)$p['price'], 0, ',', '.') ?>
+                                        </span>
+                                    </td>
+
+                                    <td class="px-5 py-4">
+                                        <?php if ($p['status'] === 'active'): ?>
+                                        <span
+                                            class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Aktif</span>
+                                        <?php elseif ($p['status'] === 'pending'): ?>
+                                        <span
+                                            class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">Pending</span>
+                                        <?php elseif ($p['status'] === 'sold'): ?>
+                                        <span
+                                            class="px-2.5 py-1 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">Terjual</span>
+                                        <?php else: ?>
+                                        <span
+                                            class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200"><?= e($p['status']) ?></span>
+                                        <?php endif; ?>
+                                    </td>
+
+                                    <td class="px-5 py-4 text-right">
+                                        <button type="button"
+                                            onclick='tampilModalDetail(<?= json_encode($p, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'
+                                            class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-sky-600 hover:text-white bg-sky-50 hover:bg-sky-600 rounded-lg transition"
+                                            title="Lihat Detail Properti di Dashboard">
+                                            <span>Lihat</span>
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                                <?php endif; ?>
                             </tbody>
-
                         </table>
-
                     </div>
 
                     <!-- Footer tabel -->
-                    <div class="px-5 py-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-slate-400">
-                        <span id="propertyCountInfo">Menampilkan <?= $total_properti ?> dari <?= $total_properti ?> properti</span>
+                    <div
+                        class="px-5 py-4 border-t border-slate-100 text-xs text-slate-400 flex items-center justify-between">
+                        <span>Menampilkan <?= $total_properti ?> data properti dari database `properties`</span>
                         <span>RumahKita Admin Panel</span>
                     </div>
 
@@ -509,77 +390,136 @@ $admin_initial = 'A';
         </main>
     </div>
 
+    <!-- MODAL DETAIL PROPERTI KHUSUS ADMIN DI DASHBOARD -->
+    <div id="modal-detail"
+        class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div
+            class="relative bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 shrink-0">
+                <div>
+                    <span id="modal-type"
+                        class="text-xs font-bold uppercase tracking-wider text-sky-600 bg-sky-50 px-2.5 py-1 rounded-full"></span>
+                    <h3 id="modal-title" class="text-xl font-bold text-slate-900 mt-2"></h3>
+                </div>
+                <button type="button" onclick="tutupModalDetail()"
+                    class="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="overflow-y-auto py-4 space-y-4 pr-1">
+                <div class="aspect-[16/9] rounded-2xl overflow-hidden bg-slate-100">
+                    <img id="modal-img" src="" alt="Foto Properti" class="w-full h-full object-cover">
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs">
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <span class="text-slate-400 block">Harga</span>
+                        <strong id="modal-price" class="text-sky-700 font-extrabold text-sm block mt-0.5"></strong>
+                    </div>
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <span class="text-slate-400 block">Kamar</span>
+                        <strong id="modal-rooms" class="text-slate-800 font-bold block mt-0.5"></strong>
+                    </div>
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <span class="text-slate-400 block">Luas Bangunan</span>
+                        <strong id="modal-area" class="text-slate-800 font-bold block mt-0.5"></strong>
+                    </div>
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <span class="text-slate-400 block">Sertifikat</span>
+                        <strong id="modal-cert" class="text-slate-800 font-bold block mt-0.5"></strong>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Lokasi & Alamat</h4>
+                    <p id="modal-location" class="text-sm font-semibold text-slate-800 mt-1"></p>
+                    <p id="modal-address" class="text-xs text-slate-500 mt-0.5"></p>
+                </div>
+
+                <div>
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Fasilitas Properti</h4>
+                    <div id="modal-facilities" class="flex flex-wrap gap-1.5 mt-2"></div>
+                </div>
+
+                <div>
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Deskripsi</h4>
+                    <p id="modal-desc" class="text-xs text-slate-600 mt-1 leading-relaxed whitespace-pre-line"></p>
+                </div>
+
+                <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+                    <span id="modal-inputter"></span>
+                    <span id="modal-status" class="font-bold"></span>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 flex justify-end shrink-0">
+                <button type="button" onclick="tutupModalDetail()"
+                    class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
     function toggleSidebar() {
-        document.getElementById('sidebar')
-            .classList.toggle('-translate-x-full');
-
-        document.getElementById('overlay')
-            .classList.toggle('hidden');
+        document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        document.getElementById('overlay').classList.toggle('hidden');
     }
 
-    // Filter & Search handler
-    const searchInput = document.getElementById('searchInput');
-    const statusFilter = document.getElementById('statusFilter');
-    const propertyRows = document.querySelectorAll('.property-row');
-    const noDataRow = document.getElementById('noDataRow');
-    const propertyCountInfo = document.getElementById('propertyCountInfo');
-    const totalCount = propertyRows.length;
+    function tampilModalDetail(data) {
+        document.getElementById('modal-title').textContent = data.title || '-';
+        document.getElementById('modal-type').textContent = (data.property_type || '').toUpperCase();
 
-    function filterProperties() {
-        const query = (searchInput.value || '').trim().toLowerCase();
-        const selectedStatus = (statusFilter.value || '').trim().toLowerCase();
-        let visibleCount = 0;
+        let imgUrl = data.primary_image || '';
+        if (imgUrl && !imgUrl.startsWith('http://') && !imgUrl.startsWith('https://')) {
+            imgUrl = '<?= BASE_URL ?>/' + imgUrl.replace(/^\/+/, '');
+        }
+        if (!imgUrl) {
+            imgUrl = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=600&q=80';
+        }
+        document.getElementById('modal-img').src = imgUrl;
 
-        propertyRows.forEach(row => {
-            const nama = row.getAttribute('data-nama') || '';
-            const lokasi = row.getAttribute('data-lokasi') || '';
-            const status = row.getAttribute('data-status') || '';
+        document.getElementById('modal-price').textContent = 'Rp ' + Number(data.price || 0).toLocaleString('id-ID');
+        document.getElementById('modal-rooms').textContent = (data.bedrooms || 0) + ' KT / ' + (data.bathrooms || 0) +
+            ' KM';
+        document.getElementById('modal-area').textContent = (data.building_area || 0) + ' m²';
+        document.getElementById('modal-cert').textContent = data.certificate_type || '-';
+        document.getElementById('modal-location').textContent = (data.city || '') + (data.province ? ', ' + data
+            .province : '');
+        document.getElementById('modal-address').textContent = data.address || '-';
+        document.getElementById('modal-desc').textContent = data.description || 'Tidak ada keterangan tambahan.';
+        document.getElementById('modal-inputter').textContent = 'Diinput oleh: ' + (data.nama_penginput || 'Admin');
+        document.getElementById('modal-status').textContent = 'Status: ' + (data.status || 'Active').toUpperCase();
 
-            const matchQuery = !query || nama.includes(query) || lokasi.includes(query);
-            const matchStatus = !selectedStatus || status === selectedStatus;
-
-            if (matchQuery && matchStatus) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
-            }
-        });
-
-        if (visibleCount === 0) {
-            noDataRow.classList.remove('hidden');
+        const facContainer = document.getElementById('modal-facilities');
+        facContainer.innerHTML = '';
+        if (data.fasilitas_list) {
+            const list = data.fasilitas_list.split('||');
+            list.forEach(item => {
+                if (item.trim()) {
+                    const badge = document.createElement('span');
+                    badge.className =
+                        'px-2.5 py-1 bg-sky-50 text-sky-700 rounded-lg text-xs font-semibold border border-sky-100';
+                    badge.textContent = item.trim();
+                    facContainer.appendChild(badge);
+                }
+            });
         } else {
-            noDataRow.classList.add('hidden');
+            facContainer.innerHTML = '<span class="text-xs text-slate-400 italic">Tidak ada fasilitas tercatat.</span>';
         }
 
-        if (propertyCountInfo) {
-            propertyCountInfo.textContent = `Menampilkan ${visibleCount} dari ${totalCount} properti`;
-        }
+        document.getElementById('modal-detail').classList.remove('hidden');
     }
 
-    if (searchInput) {
-        searchInput.addEventListener('input', filterProperties);
-    }
-    if (statusFilter) {
-        statusFilter.addEventListener('change', filterProperties);
-    }
-
-    function editProperti(id, nama) {
-        alert(`Buka mode edit untuk properti:\n"${nama}" (ID: ${id})`);
-    }
-
-    function hapusProperti(btn, nama) {
-        if (confirm(`Apakah Anda yakin ingin menghapus properti "${nama}"?`)) {
-            const row = btn.closest('tr');
-            if (row) {
-                row.remove();
-                filterProperties();
-            }
-        }
+    function tutupModalDetail() {
+        document.getElementById('modal-detail').classList.add('hidden');
     }
     </script>
-
 </body>
 
 </html>

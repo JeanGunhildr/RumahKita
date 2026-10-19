@@ -1,8 +1,23 @@
 <?php 
 require_once __DIR__ . '/../layouts/header.php'; 
-require_once __DIR__ . '/../data/properti_data.php'; 
+require_once __DIR__ . '/../../utils/koneksi.php'; 
 
-$semua_rekomendasi = get_all_properti();
+// Query 6 properti aktif terbaru dari database MySQL dengan JOIN ke tabel users untuk mengambil nama pemilik/penginput
+$sql_props = "SELECT p.*, u.name AS nama_penginput,
+                     (SELECT image_path FROM property_images WHERE property_id = p.id AND is_primary = 1 LIMIT 1) AS foto_utama
+              FROM properties p
+              LEFT JOIN users u ON p.user_id = u.id
+              WHERE p.status = 'active'
+              ORDER BY p.created_at DESC
+              LIMIT 6";
+
+$hasil_props = $conn->query($sql_props);
+$semua_properti = [];
+if ($hasil_props) {
+    while ($row = $hasil_props->fetch_assoc()) {
+        $semua_properti[] = $row;
+    }
+}
 ?>
 
 <main class="relative overflow-hidden">
@@ -60,9 +75,9 @@ $semua_rekomendasi = get_all_properti();
                             class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 text-base font-semibold text-slate-700 bg-white hover:bg-sky-50/80 border border-sky-200/90 rounded-2xl shadow-sm hover:shadow transition-all duration-200">
                             <svg class="w-5 h-5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                             </svg>
-                            <span>Panduan Cara Beli</span>
+                            <span>Panduan Pembelian</span>
                         </a>
                     </div>
 
@@ -70,85 +85,20 @@ $semua_rekomendasi = get_all_properti();
 
                 </div>
 
-                <!-- Kolom Kanan: Card Showcase Visual Properti (Sesuai Layout Gambar) -->
-                <div class="lg:col-span-5 relative">
-                    <div class="relative mx-auto max-w-md lg:max-w-none">
-
-                        <!-- Main Featured Card Image -->
+                <!-- Kolom Kanan: Visual Properti Simpel (Dikecilkan & Pudar Gradien ke Bawah) -->
+                <div class="lg:col-span-5 relative flex justify-center lg:justify-end">
+                    <div class="relative w-full max-w-sm sm:max-w-[360px] lg:max-w-[380px]">
                         <div
-                            class="relative rounded-3xl overflow-hidden shadow-2xl shadow-sky-200/50 border-4 border-white group">
-                            <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1000&q=80"
-                                alt="Rumah Mewah Modern RumahKita"
-                                class="w-full h-[400px] sm:h-[460px] object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out">
+                            class="relative rounded-3xl overflow-hidden shadow-lg shadow-sky-100/60 border border-sky-100/60 bg-white">
+                            <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80"
+                                alt="Hunian Impian RumahKita"
+                                class="w-full h-[260px] sm:h-[300px] object-cover object-center">
 
-                            <!-- Overlay Gradient -->
+                            <!-- Efek Pudar Gradien ke Bawah -->
                             <div
-                                class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/20 to-transparent">
-                            </div>
-
-                            <!-- Bottom Card Info -->
-                            <div class="absolute bottom-6 left-6 right-6 text-white space-y-2">
-                                <div class="flex items-center gap-2">
-                                    <span
-                                        class="px-3 py-1 bg-sky-500/90 backdrop-blur-md rounded-full text-xs font-bold tracking-wide uppercase">
-                                        Unit Terverifikasi
-                                    </span>
-                                    <span
-                                        class="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-semibold">
-                                        Sertifikat SHM
-                                    </span>
-                                </div>
-                                <h3 class="text-xl sm:text-2xl font-bold tracking-tight text-white drop-shadow-md">
-                                    Emerald Panorama Residence
-                                </h3>
-                                <p class="text-sky-100 text-xs sm:text-sm flex items-center gap-1.5">
-                                    <svg class="w-4 h-4 text-sky-300" fill="none" viewBox="0 0 24 24"
-                                        stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                    </svg>
-                                    Cilandak, Jakarta Selatan
-                                </p>
-                                <div class="pt-2 flex items-center justify-between border-t border-white/20">
-                                    <div>
-                                        <span class="text-[11px] text-sky-200 block">Harga Mulai</span>
-                                        <span class="text-lg sm:text-xl font-extrabold text-white">Rp
-                                            1.850.000.000</span>
-                                    </div>
-                                    <a href="#rekomendasi"
-                                        class="px-4 py-2 bg-white text-slate-900 hover:bg-sky-100 text-xs font-bold rounded-xl shadow transition-colors">
-                                        Lihat Unit
-                                    </a>
-                                </div>
+                                class="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-sky-50/95 via-sky-50/40 to-transparent pointer-events-none">
                             </div>
                         </div>
-
-                        <!-- Floating Badge 1: Review Klien -->
-                        <div
-                            class="absolute -top-4 -left-4 sm:-left-6 bg-white/95 backdrop-blur-md p-3.5 rounded-2xl shadow-xl shadow-sky-100 border border-sky-100 flex items-center gap-3">
-                            <div
-                                class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500 font-bold">
-                                ★
-                            </div>
-                            <div>
-                                <div class="text-xs font-bold text-slate-800">4.9 / 5.0 Rating</div>
-                                <div class="text-[11px] text-slate-500">Dari 1.200+ Pemilik Rumah</div>
-                            </div>
-                        </div>
-
-                        <!-- Floating Badge 2: Pendampingan Notaris & KPR -->
-                        <div
-                            class="hidden sm:flex absolute -bottom-4 -right-4 sm:-right-6 bg-white/95 backdrop-blur-md p-3.5 rounded-2xl shadow-xl shadow-sky-100 border border-sky-100 items-center gap-3">
-                            <div
-                                class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-                                ✓
-                            </div>
-                            <div>
-                                <div class="text-xs font-bold text-slate-800">Legalitas 100% Aman</div>
-                                <div class="text-[11px] text-slate-500">Cek Notaris & Bank Rekanan</div>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
 
@@ -316,51 +266,108 @@ $semua_rekomendasi = get_all_properti();
                 </div>
             </div>
 
-            <!-- Grid Kartu Properti (Dinamis dari properti_data.php) -->
+            <!-- Grid Kartu Properti (Dinamis dari Basis Data MySQL `properties` JOIN `users`) -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="property-grid">
 
-                <?php foreach ($semua_rekomendasi as $prop): ?>
+                <?php if (empty($semua_properti)): ?>
+                <!-- Tampilan Empty State jika belum ada properti di database -->
+                <div
+                    class="col-span-1 md:col-span-2 lg:col-span-3 py-16 text-center bg-white rounded-3xl border border-sky-100 p-8 shadow-sm">
+                    <div
+                        class="mx-auto mb-4 w-16 h-16 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800">Belum Ada Properti yang Ditambahkan</h3>
+                    <p class="text-sm text-slate-500 mt-1 max-w-md mx-auto">
+                        Saat ini belum ada listing properti aktif di database. Administrator dapat menambahkan properti
+                        baru melalui halaman kelola properti.
+                    </p>
+                    <?php if (apakahAdmin()): ?>
+                    <a href="<?= BASE_URL ?>/src/admin/tambah.php"
+                        class="inline-flex items-center gap-2 mt-5 px-6 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl shadow-md transition">
+                        <span>+ Tambah Properti Sekarang</span>
+                    </a>
+                    <?php endif; ?>
+                </div>
+                <?php else: ?>
+                <?php foreach ($semua_properti as $prop): ?>
+                <?php 
+                    $fotoCard = urlGambar($prop['foto_utama']);
+                    $tipeLabelMap = [
+                        'minimalis' => 'Rumah Minimalis',
+                        'cluster'   => 'Rumah Cluster',
+                        'villa'     => 'Villa Mewah',
+                        'apartemen' => 'Apartemen'
+                    ];
+                    $labelTipe = $tipeLabelMap[$prop['property_type']] ?? ucfirst($prop['property_type']);
+                    ?>
                 <div class="property-card bg-white rounded-3xl overflow-hidden border border-sky-100/90 shadow-md flex flex-col hover:shadow-xl transition-all duration-300"
-                    data-category="<?= htmlspecialchars($prop['kategori']) ?>">
+                    data-category="<?= e($prop['property_type']) ?>">
                     <div class="relative overflow-hidden aspect-[4/3] group">
-                        <img src="<?= htmlspecialchars($prop['foto_utama']) ?>"
-                            alt="<?= htmlspecialchars($prop['nama']) ?>"
+                        <img src="<?= e($fotoCard) ?>" alt="<?= e($prop['title']) ?>"
                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+
                         <div class="absolute top-4 left-4 flex flex-wrap gap-1.5">
-                            <?php foreach (array_slice($prop['badges'] ?? [], 0, 2) as $badge): ?>
-                            <span class="px-3 py-1 bg-sky-600/95 backdrop-blur-sm text-white text-xs font-bold rounded-full shadow">
-                                <?= htmlspecialchars($badge) ?>
+                            <span
+                                class="px-3 py-1 bg-sky-600/95 backdrop-blur-sm text-white text-xs font-bold rounded-full shadow">
+                                <?= e($labelTipe) ?>
                             </span>
-                            <?php endforeach; ?>
+                            <?php if (!empty($prop['certificate_type'])): ?>
+                            <span
+                                class="px-3 py-1 bg-white/90 backdrop-blur-sm text-slate-800 text-xs font-semibold rounded-full shadow">
+                                <?= e($prop['certificate_type']) ?>
+                            </span>
+                            <?php endif; ?>
                         </div>
-                        <div class="absolute bottom-3 right-3 px-3 py-1 bg-slate-950/70 backdrop-blur-md rounded-lg text-white text-xs font-medium">
-                            <?= htmlspecialchars($prop['lokasi_singkat']) ?>
+
+                        <div
+                            class="absolute bottom-3 right-3 px-3 py-1 bg-slate-950/70 backdrop-blur-md rounded-lg text-white text-xs font-medium">
+                            <?= e($prop['city']) ?>
                         </div>
                     </div>
+
                     <div class="p-6 flex-1 flex flex-col justify-between">
                         <div>
-                            <div class="text-xs font-bold text-sky-600 uppercase tracking-wider mb-1">
-                                <?= htmlspecialchars($prop['tipe_label'] ?? ucfirst($prop['kategori'])) ?>
+                            <div
+                                class="flex items-center justify-between text-xs font-bold text-sky-600 uppercase tracking-wider mb-1">
+                                <span><?= e($labelTipe) ?></span>
+                                <!-- Menampilkan nama penginput yang diambil dari JOIN ke tabel users -->
+                                <span class="text-[10px] text-slate-400 font-normal lowercase">
+                                    oleh <?= e($prop['nama_penginput'] ?: 'Admin') ?>
+                                </span>
                             </div>
-                            <h3 class="text-xl font-bold text-slate-900 line-clamp-1 hover:text-sky-600 transition-colors">
-                                <?= htmlspecialchars($prop['nama']) ?>
+
+                            <h3
+                                class="text-xl font-bold text-slate-900 line-clamp-1 hover:text-sky-600 transition-colors">
+                                <?= e($prop['title']) ?>
                             </h3>
+
                             <p class="text-xs text-slate-500 mt-1 line-clamp-2">
-                                <?= htmlspecialchars($prop['deskripsi']) ?>
+                                <?= e($prop['description'] ?: 'Hunian nyaman berlegalitas resmi dengan lokasi strategis untuk keluarga Anda.') ?>
                             </p>
 
                             <!-- Spesifikasi Fasilitas -->
-                            <div class="grid grid-cols-3 gap-2 my-4 py-3 border-y border-sky-50 text-center text-xs text-slate-600">
+                            <div
+                                class="grid grid-cols-3 gap-2 my-4 py-3 border-y border-sky-50 text-center text-xs text-slate-600">
                                 <div>
-                                    <span class="font-bold text-slate-800 block text-sm"><?= (int)($prop['kt'] ?? 0) ?> KT</span>
+                                    <span
+                                        class="font-bold text-slate-800 block text-sm"><?= (int)($prop['bedrooms'] ?? 0) ?>
+                                        KT</span>
                                     <span>Kamar Tidur</span>
                                 </div>
                                 <div>
-                                    <span class="font-bold text-slate-800 block text-sm"><?= (int)($prop['km'] ?? 0) ?> KM</span>
+                                    <span
+                                        class="font-bold text-slate-800 block text-sm"><?= (int)($prop['bathrooms'] ?? 0) ?>
+                                        KM</span>
                                     <span>Kamar Mandi</span>
                                 </div>
                                 <div>
-                                    <span class="font-bold text-slate-800 block text-sm"><?= (int)($prop['luas_bangunan'] ?? 0) ?> m²</span>
+                                    <span
+                                        class="font-bold text-slate-800 block text-sm"><?= number_format((float)($prop['building_area'] ?? 0), 0, ',', '.') ?>
+                                        m²</span>
                                     <span>Bangunan</span>
                                 </div>
                             </div>
@@ -369,9 +376,10 @@ $semua_rekomendasi = get_all_properti();
                         <div class="flex items-center justify-between pt-2">
                             <div>
                                 <span class="text-[11px] text-slate-400 block font-medium">Harga Penawaran</span>
-                                <span class="text-lg font-black text-sky-700"><?= htmlspecialchars($prop['harga_format']) ?></span>
+                                <span class="text-lg font-black text-sky-700">Rp
+                                    <?= number_format((float)$prop['price'], 0, ',', '.') ?></span>
                             </div>
-                            <a href="<?= BASE_URL ?>/src/properti/detail.php?id=<?= $prop['id'] ?>"
+                            <a href="<?= BASE_URL ?>/src/properti/detail.php?id=<?= urlencode($prop['id']) ?>"
                                 class="px-4 py-2.5 text-xs font-bold text-white bg-slate-900 hover:bg-sky-600 rounded-xl transition-all shadow-sm">
                                 Lihat Detail
                             </a>
@@ -379,19 +387,23 @@ $semua_rekomendasi = get_all_properti();
                     </div>
                 </div>
                 <?php endforeach; ?>
+                <?php endif; ?>
 
             </div>
 
-            <!-- CTA Selengkapnya -->
+            <!-- Tombol Lihat Semua Properti -->
+            <?php if (!empty($semua_properti)): ?>
             <div class="mt-12 text-center">
                 <a href="<?= BASE_URL ?>/src/properti/index.php"
-                    class="inline-flex items-center gap-2 px-8 py-3.5 bg-white hover:bg-sky-50 text-sky-700 border border-sky-200 font-bold text-sm rounded-2xl shadow-sm hover:shadow transition-all">
-                    <span>Lihat Seluruh 1.500+ Listing Properti</span>
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    class="inline-flex items-center justify-center gap-2.5 px-8 py-3.5 text-sm font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 hover:text-sky-800 border border-sky-200 rounded-2xl shadow-sm hover:shadow transition-all duration-200">
+                    <span>Lihat Semua Properti</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                            d="M14 5l7 7m0 0l-7 7m7-7H3" />
                     </svg>
                 </a>
             </div>
+            <?php endif; ?>
 
         </div>
     </section>
@@ -400,7 +412,8 @@ $semua_rekomendasi = get_all_properti();
     <!-- ========================================== -->
     <!-- 4. PAKET SECTION (Paket Jasa Promosi Rumah)-->
     <!-- ========================================== -->
-    <section id="paket" class="py-16 sm:py-20 bg-gradient-to-b from-sky-100/60 via-sky-50 to-sky-100/50 border-y border-sky-200/60 relative">
+    <section id="paket"
+        class="py-16 sm:py-20 bg-gradient-to-b from-sky-100/60 via-sky-50 to-sky-100/50 border-y border-sky-200/60 relative">
         <div id="service" class="absolute -top-24"></div>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -465,7 +478,7 @@ $semua_rekomendasi = get_all_properti();
                             </li>
                             <li class="flex items-center gap-2.5">
                                 <span class="text-emerald-500 font-bold text-sm shrink-0">✓</span>
-                                <span>Upload hingga 8 foto resolusi tinggi</span>
+                                <span>Upload 1 foto resolusi tinggi</span>
                             </li>
                             <li class="flex items-center gap-2.5">
                                 <span class="text-emerald-500 font-bold text-sm shrink-0">✓</span>
@@ -475,14 +488,9 @@ $semua_rekomendasi = get_all_properti();
                                 <span class="text-emerald-500 font-bold text-sm shrink-0">✓</span>
                                 <span>Direct chat calon pembeli ke WhatsApp Anda</span>
                             </li>
-                            <li class="flex items-center gap-2.5">
-                                <span class="text-emerald-500 font-bold text-sm shrink-0">✓</span>
-                                <span>Laporan statistik tayangan mingguan</span>
-                            </li>
                         </ul>
 
-                        <a href="https://wa.me/6281234567890?text=Halo%20RumahKita,%20saya%20tertarik%20dengan%20Paket%20Starter%20Promosi%20Rumah"
-                            target="_blank" rel="noopener noreferrer"
+                        <a href=""
                             class="w-full inline-flex items-center justify-center gap-2 py-3 px-5 text-xs sm:text-sm font-bold text-sky-700 bg-sky-50 hover:bg-sky-600 hover:text-white border border-sky-200 rounded-xl transition-all duration-200 shadow-sm">
                             <span>Pilih Paket Starter</span>
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -534,8 +542,8 @@ $semua_rekomendasi = get_all_properti();
                             <span class="text-xs text-slate-400 font-medium">/ 90 hari</span>
                         </div>
                         <p class="text-slate-600 text-sm leading-relaxed mb-6">
-                            Tingkatkan eksposur properti Anda hingga 5x lipat dengan kampanye iklan media sosial
-                            tertarget dan prioritas tayang di katalog utama.
+                            Tingkatkan eksposur properti Anda hingga 5x lipat dengan pengunggahan video terkait properti
+                            dengan masa aktif lebih lama.
                         </p>
                     </div>
 
@@ -555,20 +563,11 @@ $semua_rekomendasi = get_all_properti();
                             </li>
                             <li class="flex items-center gap-2.5">
                                 <span class="text-sky-600 font-bold text-sm shrink-0">✓</span>
-                                <span>Iklan berbayar di Instagram & Facebook Ads</span>
-                            </li>
-                            <li class="flex items-center gap-2.5">
-                                <span class="text-sky-600 font-bold text-sm shrink-0">✓</span>
-                                <span>Pembuatan video reels/TikTok promosi singkat</span>
-                            </li>
-                            <li class="flex items-center gap-2.5">
-                                <span class="text-sky-600 font-bold text-sm shrink-0">✓</span>
-                                <span>Penyaringan awal calon pembeli serius oleh agen</span>
+                                <span>Upload video properti singkat</span>
                             </li>
                         </ul>
 
-                        <a href="https://wa.me/6281234567890?text=Halo%20RumahKita,%20saya%20tertarik%20dengan%20Paket%20Pro%20Prioritas%20Promosi%20Rumah"
-                            target="_blank" rel="noopener noreferrer"
+                        <a href=""
                             class="w-full inline-flex items-center justify-center gap-2 py-3.5 px-5 text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 rounded-xl transition-all duration-200 shadow-md shadow-sky-500/25 hover:shadow-lg hover:shadow-sky-500/35">
                             <span>Pilih Paket Pro Prioritas</span>
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -616,8 +615,8 @@ $semua_rekomendasi = get_all_properti();
                             <span class="text-xs text-sky-200 font-medium">/ hingga terjual</span>
                         </div>
                         <p class="text-sky-100/80 text-sm leading-relaxed mb-6">
-                            Layanan promosi kasta tertinggi untuk villa dan hunian mewah dengan liputan sinematik drone
-                            4K, Virtual Tour 360°, dan pendampingan agen VIP penuh.
+                            Layanan promosi kasta tertinggi untuk villa dan hunian mewah dengan Virtual Tour 360°, dan
+                            pendampingan agen VIP penuh.
                         </p>
                     </div>
 
@@ -633,24 +632,15 @@ $semua_rekomendasi = get_all_properti();
                             </li>
                             <li class="flex items-center gap-2.5">
                                 <span class="text-sky-400 font-bold text-sm shrink-0">✦</span>
-                                <span>Sesi foto profesional & video sinematik drone 4K</span>
-                            </li>
-                            <li class="flex items-center gap-2.5">
-                                <span class="text-sky-400 font-bold text-sm shrink-0">✦</span>
                                 <span>Pembuatan <strong>Virtual Tour 360° Interaktif</strong></span>
                             </li>
                             <li class="flex items-center gap-2.5">
                                 <span class="text-sky-400 font-bold text-sm shrink-0">✦</span>
                                 <span>Penempatan di <strong>Banner Utama (Homepage Spotlight)</strong></span>
                             </li>
-                            <li class="flex items-center gap-2.5">
-                                <span class="text-sky-400 font-bold text-sm shrink-0">✦</span>
-                                <span>Dedicated VIP Agent untuk survei, negosiasi & notaris</span>
-                            </li>
                         </ul>
 
-                        <a href="https://wa.me/6281234567890?text=Halo%20RumahKita,%20saya%20tertarik%20dengan%20Paket%20Luxury%20Sultan%20Promosi%20Rumah"
-                            target="_blank" rel="noopener noreferrer"
+                        <a href=""
                             class="w-full inline-flex items-center justify-center gap-2 py-3.5 px-5 text-xs sm:text-sm font-extrabold text-slate-900 bg-gradient-to-r from-sky-300 via-sky-400 to-sky-300 hover:brightness-105 rounded-xl transition-all duration-200 shadow-lg shadow-sky-400/25">
                             <span>Pilih Paket Luxury</span>
                             <svg class="w-4 h-4 text-slate-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -696,10 +686,9 @@ $semua_rekomendasi = get_all_properti();
                         class="w-14 h-14 mx-auto rounded-2xl bg-sky-600 text-white font-extrabold text-lg flex items-center justify-center shadow-lg shadow-sky-500/25 mb-6 group-hover:scale-110 transition-transform">
                         1
                     </div>
-                    <h3 class="text-lg font-bold text-slate-900 mb-2">Pilih & Bandingkan</h3>
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">Jelajahi & Pilih</h3>
                     <p class="text-xs text-slate-500 leading-relaxed">
-                        Telusuri katalog properti sesuai lokasi, bujet, dan kebutuhan Anda. Bandingkan spesifikasi unit
-                        dengan fitur komparasi kami.
+                        Telusuri berbagai macam katalog properti yang ada pada aplikasi.
                     </p>
                 </div>
 
@@ -710,10 +699,9 @@ $semua_rekomendasi = get_all_properti();
                         class="w-14 h-14 mx-auto rounded-2xl bg-sky-500 text-white font-extrabold text-lg flex items-center justify-center shadow-lg shadow-sky-500/25 mb-6 group-hover:scale-110 transition-transform">
                         2
                     </div>
-                    <h3 class="text-lg font-bold text-slate-900 mb-2">Jadwalkan Survei</h3>
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">Cek Kesesuaian</h3>
                     <p class="text-xs text-slate-500 leading-relaxed">
-                        Tentukan tanggal dan jam kunjungan. Agen representatif RumahKita akan mendampingi Anda di lokasi
-                        secara gratis dan profesional.
+                        Cek kesesuaian properti sesuai keinginan.
                     </p>
                 </div>
 
@@ -724,10 +712,9 @@ $semua_rekomendasi = get_all_properti();
                         class="w-14 h-14 mx-auto rounded-2xl bg-sky-400 text-white font-extrabold text-lg flex items-center justify-center shadow-lg shadow-sky-500/25 mb-6 group-hover:scale-110 transition-transform">
                         3
                     </div>
-                    <h3 class="text-lg font-bold text-slate-900 mb-2">Legalitas & KPR</h3>
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">Survey Lokasi</h3>
                     <p class="text-xs text-slate-500 leading-relaxed">
-                        Pemeriksaan keabsahan dokumen kepemilikan oleh notaris resmi dan fasilitasi pengajuan simulasi
-                        KPR ke bank rekanan terbaik.
+                        Lakukan survey sesuai lokasi yang tertera pada aplikasi.
                     </p>
                 </div>
 
@@ -738,10 +725,9 @@ $semua_rekomendasi = get_all_properti();
                         class="w-14 h-14 mx-auto rounded-2xl bg-slate-900 text-white font-extrabold text-lg flex items-center justify-center shadow-lg shadow-slate-900/25 mb-6 group-hover:scale-110 transition-transform">
                         4
                     </div>
-                    <h3 class="text-lg font-bold text-slate-900 mb-2">Akad & Terima Kunci</h3>
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">Kontak Admin</h3>
                     <p class="text-xs text-slate-500 leading-relaxed">
-                        Penandatanganan Akta Jual Beli (AJB) sah di hadapan notaris PPAT dan serah terima kunci rumah
-                        baru Anda secara resmi.
+                        Kontak admin untuk mempertemukan dengan penjual
                     </p>
                 </div>
 
@@ -759,19 +745,19 @@ $semua_rekomendasi = get_all_properti();
                         </svg>
                     </div>
                     <div>
-                        <h4 class="font-bold text-white text-base">Butuh Bantuan Selama Proses Pembelian?</h4>
-                        <p class="text-xs text-sky-100 mt-0.5">Konsultan spesialis kami siap menjawab pertanyaan dan
-                            mendampingi Anda secara personal.</p>
+                        <h4 class="font-bold text-white text-base">Punya Pertanyaan Terkait Alur?</h4>
+                        <p class="text-xs text-sky-100 mt-0.5">Lanjut untuk berkonsultasi dengan kami melalui chat
+                            whatsapp.</p>
                     </div>
                 </div>
-                <a href="https://wa.me/6281234567890?text=Halo%20RumahKita,%20saya%20butuh%20bantuan%20konsultasi%20seputar%20pembelian%20properti"
+                <a href="https://wa.me/6287833060396?text=Halo%20RumahKita,%20saya%20butuh%20bantuan%20konsultasi%20seputar%20pembelian%20properti"
                     target="_blank" rel="noopener noreferrer"
                     class="inline-flex items-center gap-2.5 px-6 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-sm font-bold rounded-xl shadow-lg shadow-sky-950/20 hover:shadow-xl transition-all duration-200 hover:-translate-y-0.5 whitespace-nowrap">
                     <svg class="w-5 h-5 fill-current shrink-0" viewBox="0 0 24 24">
                         <path
                             d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
                     </svg>
-                    <span>Tanya Konsultan Kami via WhatsApp</span>
+                    <span>Tanya Kami via WhatsApp</span>
                 </a>
             </div>
 
@@ -806,8 +792,7 @@ $semua_rekomendasi = get_all_properti();
                     class="bg-gradient-to-b from-sky-50/50 to-white rounded-2xl border border-sky-100 overflow-hidden shadow-sm">
                     <button type="button"
                         class="faq-btn w-full px-6 py-5 text-left flex items-center justify-between gap-4 font-bold text-slate-900 hover:text-sky-600 transition-colors">
-                        <span class="text-base sm:text-lg">Apakah ada biaya perantara atau komisi bagi calon
-                            pembeli?</span>
+                        <span class="text-base sm:text-lg">Apakah menggunakan RumahKita dikenakan biaya?</span>
                         <div
                             class="faq-icon w-8 h-8 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center shrink-0 transition-transform duration-300">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -819,12 +804,8 @@ $semua_rekomendasi = get_all_properti();
                     <div class="faq-content accordion-content">
                         <div class="px-6 pb-5 pt-3 text-sm text-slate-600 leading-relaxed border-t border-sky-100">
                             <p>
-                                <strong>Sama sekali tidak ada.</strong> Seluruh layanan pencarian properti, konsultasi,
-                                dan
-                                pendampingan survei fisik ke lokasi unit di RumahKita adalah <strong>100%
-                                    gratis</strong>
-                                bagi calon pembeli. Anda hanya membayar harga kesepakatan rumah dan biaya resmi
-                                kenotariatan/pajak yang berlaku sesuai hukum.
+                                Tidak. RumahKita menyediakan informasi properti yang dapat Anda lihat secara gratis.
+                                Silakan pilih properti yang menarik untuk mengetahui informasi lebih lanjut.
                             </p>
                         </div>
                     </div>
@@ -835,8 +816,7 @@ $semua_rekomendasi = get_all_properti();
                     class="bg-gradient-to-b from-sky-50/50 to-white rounded-2xl border border-sky-100 overflow-hidden shadow-sm">
                     <button type="button"
                         class="faq-btn w-full px-6 py-5 text-left flex items-center justify-between gap-4 font-bold text-slate-900 hover:text-sky-600 transition-colors">
-                        <span class="text-base sm:text-lg">Bagaimana cara RumahKita memverifikasi keabsahan legalitas
-                            rumah?</span>
+                        <span class="text-base sm:text-lg">Bagaimana cara melihat informasi properti?</span>
                         <div
                             class="faq-icon w-8 h-8 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center shrink-0 transition-transform duration-300">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -848,12 +828,8 @@ $semua_rekomendasi = get_all_properti();
                     <div class="faq-content accordion-content">
                         <div class="px-6 pb-5 pt-3 text-sm text-slate-600 leading-relaxed border-t border-sky-100">
                             <p>
-                                Sebelum sebuah unit ditayangkan di website kami, tim legal internal dan notaris PPAT
-                                rekanan
-                                melakukan verifikasi ganda meliputi: pengecekan sertifikat asli (SHM/HGB) ke kantor BPN,
-                                verifikasi Izin Mendirikan Bangunan (IMB/PBG), riwayat pembayaran PBB, serta kepastian
-                                bahwa
-                                aset tidak dalam status sengketa atau jaminan lelang bermasalah.
+                                Anda dapat melihat daftar properti yang tersedia di halaman beranda. Klik properti yang
+                                diinginkan untuk melihat detail seperti harga, lokasi, dan deskripsi properti.
                             </p>
                         </div>
                     </div>
@@ -864,8 +840,7 @@ $semua_rekomendasi = get_all_properti();
                     class="bg-gradient-to-b from-sky-50/50 to-white rounded-2xl border border-sky-100 overflow-hidden shadow-sm">
                     <button type="button"
                         class="faq-btn w-full px-6 py-5 text-left flex items-center justify-between gap-4 font-bold text-slate-900 hover:text-sky-600 transition-colors">
-                        <span class="text-base sm:text-lg">Apakah tim RumahKita membantu pengajuan KPR hingga
-                            disetujui?</span>
+                        <span class="text-base sm:text-lg">Apakah saya perlu membuat akun untuk melihat properti?</span>
                         <div
                             class="faq-icon w-8 h-8 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center shrink-0 transition-transform duration-300">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -877,13 +852,8 @@ $semua_rekomendasi = get_all_properti();
                     <div class="faq-content accordion-content">
                         <div class="px-6 pb-5 pt-3 text-sm text-slate-600 leading-relaxed border-t border-sky-100">
                             <p>
-                                Tentu saja! Kami memiliki divisi spesialis KPR yang bekerjasama dengan lebih dari 12
-                                bank
-                                terkemuka di Indonesia (seperti BCA, Mandiri, BRI, BNI, BTN, CIMB Niaga, OCBC). Kami
-                                akan
-                                membantu menganalisis profil finansial Anda, memilih program bunga paling murah,
-                                menyusun
-                                kelengkapan berkas, hingga mendampingi saat penandatanganan akad kredit.
+                                Anda dapat menjelajahi informasi properti yang tersedia di RumahKita. Jika ingin
+                                menggunakan fitur akun, silakan daftar atau login terlebih dahulu.
                             </p>
                         </div>
                     </div>
@@ -894,8 +864,7 @@ $semua_rekomendasi = get_all_properti();
                     class="bg-gradient-to-b from-sky-50/50 to-white rounded-2xl border border-sky-100 overflow-hidden shadow-sm">
                     <button type="button"
                         class="faq-btn w-full px-6 py-5 text-left flex items-center justify-between gap-4 font-bold text-slate-900 hover:text-sky-600 transition-colors">
-                        <span class="text-base sm:text-lg">Bisakah saya menjadwalkan kunjungan survei pada hari libur
-                            atau akhir pekan?</span>
+                        <span class="text-base sm:text-lg">Bagaimana cara menambahkan properti ke RumahKita?</span>
                         <div
                             class="faq-icon w-8 h-8 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center shrink-0 transition-transform duration-300">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -907,38 +876,9 @@ $semua_rekomendasi = get_all_properti();
                     <div class="faq-content accordion-content">
                         <div class="px-6 pb-5 pt-3 text-sm text-slate-600 leading-relaxed border-t border-sky-100">
                             <p>
-                                Bisa sekali. Tim agen kami beroperasi setiap hari termasuk hari Sabtu, Minggu, dan hari
-                                libur nasional. Anda cukup memilih tombol survei pada halaman properti atau menghubungi
-                                layanan WhatsApp kami minimal 1 hari sebelumnya untuk memastikan ketersediaan akses unit
-                                bersama pemilik rumah.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- FAQ Item 5 -->
-                <div
-                    class="bg-gradient-to-b from-sky-50/50 to-white rounded-2xl border border-sky-100 overflow-hidden shadow-sm">
-                    <button type="button"
-                        class="faq-btn w-full px-6 py-5 text-left flex items-center justify-between gap-4 font-bold text-slate-900 hover:text-sky-600 transition-colors">
-                        <span class="text-base sm:text-lg">Bagaimana cara pemilik rumah mendaftarkan propertinya untuk
-                            dijual?</span>
-                        <div
-                            class="faq-icon w-8 h-8 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center shrink-0 transition-transform duration-300">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                                    d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </div>
-                    </button>
-                    <div class="faq-content accordion-content">
-                        <div class="px-6 pb-5 pt-3 text-sm text-slate-600 leading-relaxed border-t border-sky-100">
-                            <p>
-                                Sangat mudah! Anda cukup menekan tombol 'Jual Rumah' di bagian navigasi atas, mengisi
-                                formulir data properti, spesifikasi, dan foto awal. Tim verifikator RumahKita akan
-                                menghubungi Anda dalam waktu 1x24 jam untuk melakukan validasi dokumen serta
-                                menjadwalkan
-                                sesi foto profesional bila diperlukan.
+                                Penambahan data properti dikelola oleh admin RumahKita. Jika Anda ingin mengajukan
+                                informasi properti untuk ditampilkan, silakan hubungi admin untuk informasi lebih
+                                lanjut.
                             </p>
                         </div>
                     </div>
